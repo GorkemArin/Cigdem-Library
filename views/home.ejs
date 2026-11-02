@@ -1,0 +1,157 @@
+<%- include('partials/head', { title: 'Mahalle kütüphanesi' }) %>
+<%- include('partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('partials/flash') %>
+
+    <section class="hero">
+      <div class="hero-main">
+        <span class="eyebrow">Çiğdem Mahallesi · Ortak kütüphane</span>
+        <h1 class="hero-title">Mahallenin kitaplığı, hepimizin.</h1>
+        <p class="hero-lead">
+          Kataloğa göz atın, aradığınız kitabı bulun ve birkaç adımda ödünç talebi oluşturun.
+          Kitaplar kütüphaneden elden teslim edilir.
+        </p>
+
+        <form class="hero-search" method="get" action="/kitaplar" role="search">
+          <label class="skip-link" for="hero-search-input">Kitap ara</label>
+          <input id="hero-search-input" type="search" name="q" placeholder="Kitap adı, yazar, ISBN veya konu…" autocomplete="off">
+          <button class="btn" type="submit">Kitap ara</button>
+        </form>
+        <p class="hero-note">Ödünç almak için üye olun; üyelikler kütüphane yöneticisi tarafından onaylanır.</p>
+      </div>
+
+      <aside class="hero-aside">
+        <div class="hero-aside-art" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+
+        <% if (!currentUser) { %>
+          <div>
+            <h2>Kütüphane kartınızı oluşturun</h2>
+            <p>Üyelik başvurusu birkaç dakika sürer. Onaylandığında kitap talep edebilir, teslim tarihlerinizi takip edebilirsiniz.</p>
+          </div>
+          <div class="btn-row">
+            <a class="btn" href="/kayit">Üye ol</a>
+            <a class="btn btn--secondary" href="/giris">Giriş yap</a>
+          </div>
+        <% } else if (currentUser.role === 'admin') { %>
+          <div>
+            <h2>Yönetim paneli</h2>
+            <p>Kitap künyelerini, kopyaları, üyelikleri ve ödünç taleplerini buradan yönetin.</p>
+          </div>
+          <a class="btn" href="/admin">Panele git</a>
+        <% } else if (currentUser.status === 'active') { %>
+          <div>
+            <h2>Merhaba, <%= currentUser.full_name.split(' ')[0] %></h2>
+            <p>Aktif ödünçlerinizi, teslim tarihlerinizi ve taleplerinizi hesabınızdan takip edebilirsiniz.</p>
+          </div>
+          <a class="btn" href="/hesabim">Hesabım</a>
+        <% } else { %>
+          <div>
+            <h2>Üyeliğiniz onay bekliyor</h2>
+            <p>Kütüphane yöneticisi başvurunuzu inceledikten sonra kitap ödünç alabilirsiniz.</p>
+          </div>
+          <a class="btn btn--secondary" href="/hesabim">Durumu gör</a>
+        <% } %>
+      </aside>
+    </section>
+
+    <section class="stats-strip" aria-label="Kütüphane özeti">
+      <div class="stat">
+        <span class="stat-value"><%= stats.books %></span>
+        <span class="stat-label">Kitap künyesi</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value"><%= stats.copies %></span>
+        <span class="stat-label">Fiziksel kopya</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value"><%= stats.active_members %></span>
+        <span class="stat-label">Aktif üye</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value"><%= stats.active_loans %></span>
+        <span class="stat-label">Şu an ödünçte</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Nasıl çalışır?</span>
+          <h2>Üç adımda kitabınızı alın</h2>
+        </div>
+        <a class="btn btn--secondary btn--sm" href="/hakkinda">Ayrıntılar</a>
+      </div>
+
+      <div class="steps">
+        <article class="step">
+          <span class="step-number">1</span>
+          <h3>Katalogda arayın</h3>
+          <p>Kitap adı, yazar, ISBN veya konu ile arayın. Her kitabın kaç kopyasının müsait olduğunu görün.</p>
+        </article>
+        <article class="step">
+          <span class="step-number">2</span>
+          <h3>Ödünç talebi oluşturun</h3>
+          <p>Üye girişi yapın, kitap sayfasındaki kısa formu doldurun. Talebiniz yöneticinin onayına düşer.</p>
+        </article>
+        <article class="step">
+          <span class="step-number">3</span>
+          <h3>Elden teslim alın</h3>
+          <p>Onaylandığında kütüphaneye gelin. Yönetici teslimi sisteme işler; teslim tarihini hesabınızdan izleyin.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Rafa yeni gelenler</span>
+          <h2>Son eklenen kitaplar</h2>
+        </div>
+        <a class="btn btn--secondary btn--sm" href="/kitaplar">Tüm katalog</a>
+      </div>
+
+      <% if (newBooks.length === 0) { %>
+        <div class="empty-state">
+          <strong>Henüz kitap eklenmemiş.</strong>
+          Kütüphane yöneticisi ilk kitapları eklediğinde burada görünecek.
+        </div>
+      <% } else { %>
+        <div class="book-grid">
+          <% for (const book of newBooks) { %>
+            <%- include('partials/book-card', { book }) %>
+          <% } %>
+        </div>
+      <% } %>
+    </section>
+
+    <% if (popular.length > 0) { %>
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Mahallenin favorileri</span>
+            <h2>En çok ödünç alınanlar</h2>
+          </div>
+        </div>
+        <div class="card">
+          <div class="loan-list">
+            <% for (const item of popular) { %>
+              <div class="loan-row">
+                <div>
+                  <h3><a href="/kitaplar/<%= item.id %>"><%= item.title %></a></h3>
+                  <p><%= item.authors || 'Yazar belirtilmemiş' %></p>
+                </div>
+                <span class="badge badge--accent"><%= item.loan_count %> ödünç</span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </section>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,19 @@
+<% if (pagination.totalPages > 1) { %>
+  <nav class="pagination" aria-label="Sayfalar">
+    <% if (pagination.hasPrev) { %>
+      <a href="<%= currentPath %><%= pageQuery(pagination.page - 1, baseQuery || {}) %>" rel="prev" aria-label="Önceki sayfa">‹</a>
+    <% } %>
+    <% for (const item of pagination.pages) { %>
+      <% if (item === 'gap') { %>
+        <span class="pagination-gap" aria-hidden="true">…</span>
+      <% } else if (item === pagination.page) { %>
+        <span class="pagination-current" aria-current="page"><%= item %></span>
+      <% } else { %>
+        <a href="<%= currentPath %><%= pageQuery(item, baseQuery || {}) %>" aria-label="Sayfa <%= item %>"><%= item %></a>
+      <% } %>
+    <% } %>
+    <% if (pagination.hasNext) { %>
+      <a href="<%= currentPath %><%= pageQuery(pagination.page + 1, baseQuery || {}) %>" rel="next" aria-label="Sonraki sayfa">›</a>
+    <% } %>
+  </nav>
+<% } %>

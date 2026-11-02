@@ -1,0 +1,88 @@
+<%- include('../../partials/head', { title: 'Kitaplar' }) %>
+<%- include('../../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>Kitaplar</h1>
+        <p><%= total %> kitap künyesi. Künyeleri Open Library ile doldurabilir veya elle girebilirsiniz.</p>
+      </div>
+      <a class="btn" href="/admin/kitaplar/yeni">Yeni kitap ekle</a>
+    </div>
+
+    <%- include('../../partials/admin-nav', { activeAdmin }) %>
+
+    <form class="filter-form card card-body" method="get" action="/admin/kitaplar" role="search">
+      <div class="field">
+        <label for="q">Kitap, yazar veya ISBN</label>
+        <input id="q" type="search" name="q" value="<%= q %>" placeholder="Aramak için yazın…">
+      </div>
+      <button class="btn" type="submit">Ara</button>
+      <% if (q) { %><a class="btn btn--ghost" href="/admin/kitaplar">Temizle</a><% } %>
+    </form>
+
+    <% if (books.length === 0) { %>
+      <div class="empty-state mt-2">
+        <strong><%= q ? 'Aramanıza uygun kitap bulunamadı.' : 'Kütüphanede henüz kitap yok.' %></strong>
+        <% if (q) { %>
+          Farklı bir kelime deneyin veya <a href="/admin/kitaplar/yeni">yeni kitap ekleyin</a>.
+        <% } else { %>
+          İlk kitabı eklemek için <a href="/admin/kitaplar/yeni">buraya tıklayın</a>.
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kitap</th>
+              <th>ISBN</th>
+              <th>Kopya</th>
+              <th>Yayın</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const book of books) { %>
+              <tr>
+                <td>
+                  <a class="table-title" href="/admin/kitaplar/<%= book.id %>"><%= book.title %></a>
+                  <p class="table-sub"><%= book.authors || 'Yazar belirtilmemiş' %></p>
+                </td>
+                <td class="nowrap">
+                  <% if (book.isbn13 || book.isbn10) { %>
+                    <span class="code"><%= book.isbn13 || book.isbn10 %></span>
+                  <% } else { %>
+                    <span class="muted">—</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (book.available_copies > 0) { %>
+                    <span class="badge badge--success"><%= book.available_copies %> / <%= book.total_copies %> müsait</span>
+                  <% } else if (book.total_copies > 0) { %>
+                    <span class="badge badge--warn">0 / <%= book.total_copies %> müsait</span>
+                  <% } else { %>
+                    <span class="badge badge--muted">Kopya yok</span>
+                  <% } %>
+                </td>
+                <td class="nowrap"><%= book.published_year || '—' %></td>
+                <td class="actions">
+                  <a class="btn btn--ghost btn--sm" href="/admin/kitaplar/<%= book.id %>">Detay</a>
+                  <a class="btn btn--ghost btn--sm" href="/admin/kitaplar/<%= book.id %>/duzenle">Düzenle</a>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <%- include('../../partials/pagination', { pagination, baseQuery: { q: q || undefined } }) %>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,171 @@
+<%
+  const coverVariant = book.id % 3;
+  const coverClass = coverVariant === 1 ? 'cover-placeholder--saffron' : coverVariant === 2 ? 'cover-placeholder--green' : '';
+  const initial = (book.title || '?').trim().charAt(0).toLocaleUpperCase('tr-TR');
+%>
+<%- include('partials/head', { title: book.title }) %>
+<%- include('partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('partials/flash') %>
+
+    <p class="text-small"><a href="/kitaplar">← Kataloğa dön</a></p>
+
+    <article class="detail">
+      <div class="detail-cover">
+        <span class="cover-placeholder <%= coverClass %>">
+          <span class="cover-initial"><%= initial %></span>
+          <span class="cover-caption">Çiğdemim Kütüphane</span>
+        </span>
+        <% if (book.cover_url) { %>
+          <img src="<%= book.cover_url %>" alt="<%= book.title %> kapak görseli" referrerpolicy="no-referrer" data-cover>
+        <% } %>
+      </div>
+
+      <div class="detail-body">
+        <div class="page-header">
+          <div>
+            <span class="eyebrow"><%= book.categories ? book.categories.split(',')[0].trim() : 'Kitap' %></span>
+            <h1><%= book.title %></h1>
+            <% if (book.subtitle) { %>
+              <p class="detail-subtitle"><%= book.subtitle %></p>
+            <% } %>
+            <p class="detail-authors"><%= book.authors || 'Yazar belirtilmemiş' %></p>
+          </div>
+          <% if (currentUser && currentUser.role === 'admin') { %>
+            <a class="btn btn--secondary btn--sm" href="/admin/kitaplar/<%= book.id %>/duzenle">Künyeyi düzenle</a>
+          <% } %>
+        </div>
+
+        <div class="availability">
+          <% if (book.available_copies > 0) { %>
+            <span class="badge badge--success badge--dot"><%= book.available_copies %> kopya müsait</span>
+          <% } else if (book.total_copies > 0) { %>
+            <span class="badge badge--warn badge--dot">Şu an müsait değil</span>
+          <% } else { %>
+            <span class="badge badge--muted">Henüz kopya eklenmemiş</span>
+          <% } %>
+          <span class="badge badge--muted"><%= book.total_copies %> toplam kopya</span>
+        </div>
+
+        <dl class="meta-list">
+          <% if (book.isbn13 || book.isbn10) { %>
+            <dt>ISBN</dt>
+            <dd><%= formatIsbn(book.isbn13 || book.isbn10) %></dd>
+          <% } %>
+          <% if (book.publisher) { %>
+            <dt>Yayınevi</dt>
+            <dd><%= book.publisher %></dd>
+          <% } %>
+          <% if (book.published_year) { %>
+            <dt>Yayın yılı</dt>
+            <dd><%= book.published_year %></dd>
+          <% } %>
+          <dt>Dil</dt>
+          <dd><%= languageLabel(book.language) %></dd>
+          <% if (book.page_count) { %>
+            <dt>Sayfa</dt>
+            <dd><%= book.page_count %></dd>
+          <% } %>
+          <% if (book.categories) { %>
+            <dt>Konular</dt>
+            <dd><%= book.categories %></dd>
+          <% } %>
+          <dt>Kayıt no</dt>
+          <dd>#<%= book.id %></dd>
+        </dl>
+
+        <% if (book.description) { %>
+          <div class="description">
+            <h2 class="mt-2">Kitap hakkında</h2>
+            <%= book.description %>
+          </div>
+        <% } %>
+
+        <% if (copies.length > 0) { %>
+          <div class="mt-3">
+            <h2 class="text-small muted">Kopya durumları</h2>
+            <div class="btn-row">
+              <% for (const copy of copies) { %>
+                <% const info = copyStatus(copy.status); %>
+                <span class="badge badge--<%= info.tone %>"><%= copy.inventory_no %> · <%= info.label %></span>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <section class="borrow-box" aria-labelledby="borrow-heading">
+          <h2 id="borrow-heading">Ödünç al</h2>
+          <p>Kitabı kütüphaneden elden teslim alacaksınız. Talep onaylandığında bir kopya sizin için rezerve edilir.</p>
+
+          <% if (!currentUser) { %>
+            <div class="notice">
+              Ödünç talebi oluşturmak için üye girişi yapın.
+            </div>
+            <div class="btn-row mt-2">
+              <a class="btn" href="/giris?next=<%= encodeURIComponent('/kitaplar/' + book.id) %>">Giriş yap</a>
+              <a class="btn btn--secondary" href="/kayit">Üye ol</a>
+            </div>
+          <% } else if (currentUser.role === 'admin') { %>
+            <div class="notice">
+              Yönetici hesabıyla üye talebi oluşturulmaz. Teslim işlemini ödünç yönetimi ekranından yapabilirsiniz.
+            </div>
+            <a class="btn btn--secondary mt-2" href="/admin/talepler">Ödünç talepleri</a>
+          <% } else if (currentUser.status === 'pending') { %>
+            <div class="notice notice--warn">
+              Üyeliğiniz henüz onaylanmadı. Yönetici onayından sonra ödünç talebi oluşturabilirsiniz.
+            </div>
+            <a class="btn btn--secondary mt-2" href="/hesabim">Üyelik durumum</a>
+          <% } else if (currentUser.status === 'suspended') { %>
+            <div class="notice notice--danger">
+              Üyeliğiniz askıda olduğu için ödünç talebi oluşturulamaz. Kütüphane yöneticisiyle iletişime geçin.
+            </div>
+          <% } else if (activeLoan) { %>
+            <div class="notice notice--success">
+              Bu kitabın <strong><%= activeLoan.inventory_no %></strong> numaralı kopyası sizde.
+              Teslim tarihi: <strong><%= formatDate(activeLoan.due_at) %></strong> (<%= dueInfo(activeLoan.due_at).label %>).
+            </div>
+            <a class="btn btn--secondary mt-2" href="/hesabim">Ödünçlerim</a>
+          <% } else if (openRequest && openRequest.status === 'pending') { %>
+            <div class="notice notice--warn">
+              Bu kitap için <strong>onay bekleyen</strong> bir talebiniz var. Yönetici onayladığında kitabı elden teslim alabilirsiniz.
+            </div>
+            <form class="mt-2" method="post" action="/hesabim/talepler/<%= openRequest.id %>/iptal" data-confirm="Talebinizi iptal etmek istediğinize emin misiniz?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn--secondary btn--sm" type="submit">Talebi iptal et</button>
+            </form>
+          <% } else if (openRequest && openRequest.status === 'approved') { %>
+            <div class="notice notice--success">
+              Talebiniz onaylandı ve bir kopya sizin için rezerve edildi. Kitabı kütüphaneden elden teslim alabilirsiniz.
+            </div>
+            <a class="btn btn--secondary mt-2" href="/hesabim">Hesabım</a>
+          <% } else if (book.available_copies < 1) { %>
+            <div class="notice notice--warn">
+              Bu kitabın şu anda müsait kopyası yok. İade edildiğinde katalogda yeniden “müsait” olarak görünecek.
+            </div>
+          <% } else if (limitReached) { %>
+            <div class="notice notice--warn">
+              Aynı anda en fazla <strong><%= settings.max_active_loans %></strong> açık ödünç/talep hakkınız var
+              (şu an <%= activeCount %> ödünç, <%= openCount %> açık talep). Yeni talep için önce mevcut kitaplarınızı iade edin.
+            </div>
+            <a class="btn btn--secondary mt-2" href="/hesabim">Ödünçlerim</a>
+          <% } else { %>
+            <form method="post" action="/hesabim/talepler">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="book_id" value="<%= book.id %>">
+              <div class="field">
+                <label for="member_note">Not (isteğe bağlı)</label>
+                <textarea id="member_note" name="member_note" maxlength="500" placeholder="Örn. hafta sonu teslim alabilirim."></textarea>
+                <p class="hint">Teslim alma tercihinizi yöneticiye iletebilirsiniz.</p>
+              </div>
+              <button class="btn" type="submit">Ödünç talebi oluştur</button>
+            </form>
+          <% } %>
+        </section>
+      </div>
+    </article>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,22 @@
+<%- include('partials/head', { title }) %>
+<%- include('partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-head">
+          <span class="eyebrow">Hata <%= status %></span>
+          <h1><%= title %></h1>
+          <p><%= message %></p>
+        </div>
+        <div class="btn-row btn-row--center">
+          <a class="btn" href="/">Ana sayfa</a>
+          <a class="btn btn--secondary" href="/kitaplar">Kataloğa git</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

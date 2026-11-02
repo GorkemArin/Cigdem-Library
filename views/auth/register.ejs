@@ -1,0 +1,80 @@
+<%- include('../partials/head', { title: 'Üye ol' }) %>
+<%- include('../partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('../partials/flash') %>
+
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-head">
+          <img class="brand-mark" src="/logo.svg" alt="" width="44" height="44">
+          <h1>Kütüphane üyeliği</h1>
+          <p>Başvurunuz kütüphane yöneticisi tarafından onaylandıktan sonra kitap ödünç alabilirsiniz.</p>
+        </div>
+
+        <% if (errors._form) { %>
+          <div class="form-error" role="alert"><%= errors._form %></div>
+        <% } %>
+
+        <form method="post" action="/kayit">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="field <%= errors.full_name ? 'field--invalid' : '' %>">
+            <label for="full_name">Ad ve soyad <span class="required">*</span></label>
+            <input id="full_name" type="text" name="full_name" value="<%= values.full_name %>" autocomplete="name" maxlength="120" required autofocus>
+            <% if (errors.full_name) { %><p class="field-error"><%= errors.full_name %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.email ? 'field--invalid' : '' %>">
+            <label for="email">E-posta <span class="required">*</span></label>
+            <input id="email" type="email" name="email" value="<%= values.email %>" autocomplete="email" maxlength="200" required>
+            <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.phone ? 'field--invalid' : '' %>">
+            <label for="phone">Telefon (isteğe bağlı)</label>
+            <input id="phone" type="tel" name="phone" value="<%= values.phone %>" autocomplete="tel" maxlength="30">
+            <% if (errors.phone) { %><p class="field-error"><%= errors.phone %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.address ? 'field--invalid' : '' %>">
+            <label for="address">Adres / mahalle (isteğe bağlı)</label>
+            <input id="address" type="text" name="address" value="<%= values.address %>" autocomplete="street-address" maxlength="300">
+            <% if (errors.address) { %><p class="field-error"><%= errors.address %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.password ? 'field--invalid' : '' %>">
+            <label for="password">Şifre <span class="required">*</span></label>
+            <input id="password" type="password" name="password" autocomplete="new-password" minlength="8" required>
+            <p class="hint">En az 8 karakter.</p>
+            <% if (errors.password) { %><p class="field-error"><%= errors.password %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.password_confirm ? 'field--invalid' : '' %>">
+            <label for="password_confirm">Şifre (tekrar) <span class="required">*</span></label>
+            <input id="password_confirm" type="password" name="password_confirm" autocomplete="new-password" minlength="8" required>
+            <% if (errors.password_confirm) { %><p class="field-error"><%= errors.password_confirm %></p><% } %>
+          </div>
+
+          <div class="field checkbox-field <%= errors.terms ? 'field--invalid' : '' %>">
+            <input id="terms" type="checkbox" name="terms" value="on">
+            <label for="terms">
+              Üyelik koşullarını ve kişisel bilgilerimin kütüphane işlemleri için kullanılmasını kabul ediyorum.
+              Ayrıntılar için <a href="/hakkinda">Hakkında</a> sayfasına bakabilirsiniz.
+            </label>
+          </div>
+          <% if (errors.terms) { %><p class="field-error mb-0"><%= errors.terms %></p><% } %>
+
+          <button class="btn btn--block mt-2" type="submit">Üyelik başvurusu gönder</button>
+        </form>
+
+        <p class="auth-foot">
+          Zaten hesabınız var mı? <a href="/giris">Giriş yapın</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

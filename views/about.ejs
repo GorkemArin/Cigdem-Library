@@ -1,0 +1,78 @@
+<%- include('partials/head', { title: 'Hakkında' }) %>
+<%- include('partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Çiğdemim Derneği</span>
+        <h1>Mahalle kütüphanesi nasıl işler?</h1>
+        <p>Kitaplar mahalle sakinlerinin ortak kullanımı için dernek tarafından korunur. Katalog dijital, teslim ve iade elden yapılır.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body prose">
+        <h2>Ödünç alma süreci</h2>
+        <ol>
+          <li><strong>Üye olun.</strong> Ad, e-posta ve isteğe bağlı telefon bilgisiyle başvurun. Üyelikler kütüphane yöneticisi tarafından onaylanır.</li>
+          <li><strong>Kitabı bulun.</strong> Katalogda ad, yazar, ISBN veya konu ile arama yapın. Kitap sayfasında müsait kopya sayısını görün.</li>
+          <li><strong>Talep oluşturun.</strong> Kısa formu doldurun. Aynı kitap için açık bir talebiniz varsa veya kitap sizdeyse yeni talep açılmaz.</li>
+          <li><strong>Onayı bekleyin.</strong> Yönetici uygun bir kopyayı sizin için rezerve eder. Talebinizin durumunu hesabınızdan takip edin.</li>
+          <li><strong>Elden teslim alın.</strong> Kütüphaneye geldiğinizde yönetici teslimi sisteme işler ve teslim tarihini belirler.</li>
+          <li><strong>Zamanında iade edin.</strong> Teslim tarihini hesabınızdan görebilirsiniz. İade, yönetici tarafından sisteme işlenir.</li>
+        </ol>
+
+        <h2>Kütüphane kuralları</h2>
+        <ul>
+          <li>Ödünç süresi <strong><%= settings.loan_days %> gün</strong>; süre, koşullar uygunsa <strong><%= settings.max_renewals %> kez</strong> ve her seferinde <strong><%= settings.renew_days %> gün</strong> uzatılabilir.</li>
+          <li>Aynı anda en fazla <strong><%= settings.max_active_loans %></strong> açık ödünç/talep hakkı vardır.</li>
+          <li>Gecikmiş ödünçler uzatılamaz; önce iade işlemi yapılmalıdır.</li>
+          <li>Kitaba zarar verilmesi veya kaybolması durumunda kütüphane yöneticisiyle iletişime geçin. Kopya “onarımda” veya “kayıp” olarak işaretlenebilir.</li>
+          <li>Kitap bağışlamak veya katalogda olmayan bir kitabı önermek için yöneticilere ulaşın.</li>
+        </ul>
+
+        <h2>Roller</h2>
+        <div class="info-grid">
+          <div class="card card--flat">
+            <div class="card-body">
+              <h3>Standart üye</h3>
+              <p class="text-small muted">Katalogda arama yapar, ödünç talebi oluşturur, teslim tarihlerini ve geçmişini görür.</p>
+            </div>
+          </div>
+          <div class="card card--flat">
+            <div class="card-body">
+              <h3>Kütüphane yöneticisi</h3>
+              <p class="text-small muted">Kitap künyesi ve kopya ekler, üyelikleri onaylar, talepleri sonuçlandırır, teslim ve iadeleri işler.</p>
+            </div>
+          </div>
+          <div class="card card--flat">
+            <div class="card-body">
+              <h3>Veri kaynağı</h3>
+              <p class="text-small muted">Künye alanları Open Library’den ISBN veya ad/yazar ile aranarak doldurulabilir; kayıtlar yerel veritabanında tutulur.</p>
+            </div>
+          </div>
+        </div>
+
+        <h2>Kişisel veriler</h2>
+        <p>
+          Üyelik için ad, e-posta, isteğe bağlı telefon ve adres bilgisi alınır. Bu bilgiler yalnızca kütüphane işlemlerini yürütmek,
+          ödünç ve iade takibini yapmak amacıyla kullanılır; üçüncü kişilerle paylaşılmaz. Verilerinizin silinmesi veya düzeltilmesi için
+          kütüphane yöneticilerine başvurabilirsiniz. Yayına geçmeden önce derneğin KVKK aydınlatma metni ve açık rıza metni eklenmelidir.
+        </p>
+
+        <h2>İletişim</h2>
+        <p>
+          Çiğdem Mahallesi, Çiğdemim Derneği Kütüphanesi<br>
+          E-posta: <a href="mailto:<%= settings.contact_email %>"><%= settings.contact_email || 'kutuphane@cigdemim.org' %></a>
+          <% if (settings.contact_phone) { %><br>Telefon: <a href="tel:<%= settings.contact_phone %>"><%= settings.contact_phone %></a><% } %>
+        </p>
+        <p class="text-small muted">Adres ve çalışma saatleri dernek tarafından kesinleştirildiğinde bu alana eklenecek.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

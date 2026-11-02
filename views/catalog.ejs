@@ -1,0 +1,89 @@
+<%- include('partials/head', { title: title }) %>
+<%- include('partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Katalog</span>
+        <h1><%= q ? 'Arama sonuçları' : 'Kitaplığı keşfedin' %></h1>
+        <p>
+          <% if (q) { %>
+            “<strong><%= q %></strong>” için <%= total %> kitap bulundu.
+          <% } else { %>
+            Mahalle kütüphanesindeki <%= total %> kitap künyesine göz atın. Müsait kopyası olanları hemen talep edebilirsiniz.
+          <% } %>
+        </p>
+      </div>
+    </div>
+
+    <section class="search-panel" aria-label="Kitap arama">
+      <form class="search-form" method="get" action="/kitaplar" role="search">
+        <div class="field">
+          <label for="q">Kitap, yazar, ISBN veya konu</label>
+          <input id="q" type="search" name="q" value="<%= q %>" placeholder="Örn. Tutunamayanlar, Oğuz Atay, roman…" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="musait">Durum</label>
+          <select id="musait" name="musait">
+            <option value="">Tümü</option>
+            <option value="1" <%= availableOnly ? 'selected' : '' %>>Yalnızca müsait</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="dil">Dil</label>
+          <select id="dil" name="dil">
+            <option value="">Tüm diller</option>
+            <% for (const code of languages) { %>
+              <option value="<%= code %>" <%= language === code ? 'selected' : '' %>><%= languageLabel(code) %></option>
+            <% } %>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="sirala">Sıralama</label>
+          <select id="sirala" name="sirala">
+            <option value="relevance" <%= sort === 'relevance' ? 'selected' : '' %>>İlgiye göre</option>
+            <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Yeni eklenenler</option>
+            <option value="title" <%= sort === 'title' ? 'selected' : '' %>>Kitap adı (A–Z)</option>
+          </select>
+        </div>
+
+        <div class="search-actions">
+          <button class="btn" type="submit">Ara</button>
+          <% if (q || availableOnly || language || sort !== 'relevance') { %>
+            <a class="btn btn--ghost" href="/kitaplar">Filtreleri temizle</a>
+          <% } %>
+        </div>
+      </form>
+    </section>
+
+    <div class="result-summary">
+      <p><%= pagination.from %>–<%= pagination.to %> / <%= total %> sonuç</p>
+      <% if (availableOnly) { %>
+        <span class="badge badge--success">Yalnızca müsait kitaplar</span>
+      <% } %>
+    </div>
+
+    <% if (books.length === 0) { %>
+      <div class="empty-state">
+        <strong>Bu kriterlere uyan kitap bulunamadı.</strong>
+        Farklı bir anahtar kelime deneyin, filtreleri kaldırın veya kütüphane yöneticisinden kitabın eklenmesini isteyin.
+      </div>
+    <% } else { %>
+      <div class="book-grid">
+        <% for (const book of books) { %>
+          <%- include('partials/book-card', { book }) %>
+        <% } %>
+      </div>
+
+      <%- include('partials/pagination', { pagination, baseQuery }) %>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

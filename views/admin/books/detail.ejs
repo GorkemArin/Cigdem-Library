@@ -1,0 +1,228 @@
+<%- include('../../partials/head', { title: book.title }) %>
+<%- include('../../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim · Kitap #<%= book.id %></span>
+        <h1><%= book.title %></h1>
+        <p><%= book.authors || 'Yazar belirtilmemiş' %> · <%= book.available_copies %> / <%= book.total_copies %> kopya müsait</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn--secondary btn--sm" href="/kitaplar/<%= book.id %>">Katalogda gör</a>
+        <a class="btn btn--sm" href="/admin/kitaplar/<%= book.id %>/duzenle">Künyeyi düzenle</a>
+      </div>
+    </div>
+
+    <%- include('../../partials/admin-nav', { activeAdmin }) %>
+
+    <div class="admin-grid">
+      <div class="stack">
+        <section class="card">
+          <div class="panel-head">
+            <h2>Künye</h2>
+            <span class="text-small muted">Güncellendi: <%= formatDateTime(book.updated_at) %></span>
+          </div>
+          <div class="card-body">
+            <dl class="meta-list">
+              <dt>ISBN</dt>
+              <dd><%= formatIsbn(book.isbn13 || book.isbn10) %></dd>
+              <dt>Yayınevi</dt>
+              <dd><%= book.publisher || '—' %></dd>
+              <dt>Yayın yılı</dt>
+              <dd><%= book.published_year || '—' %></dd>
+              <dt>Dil</dt>
+              <dd><%= languageLabel(book.language) %></dd>
+              <dt>Sayfa</dt>
+              <dd><%= book.page_count || '—' %></dd>
+              <dt>Konular</dt>
+              <dd><%= book.categories || '—' %></dd>
+              <dt>Open Library</dt>
+              <dd>
+                <% if (book.openlibrary_key) { %>
+                  <a href="https://openlibrary.org<%= book.openlibrary_key %>" target="_blank" rel="noopener noreferrer"><%= book.openlibrary_key %></a>
+                <% } else { %>
+                  —
+                <% } %>
+              </dd>
+            </dl>
+            <% if (book.description) { %>
+              <p class="description"><%= book.description %></p>
+            <% } %>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Kopyalar</h2>
+            <span class="text-small muted"><%= copies.length %> kayıt</span>
+          </div>
+          <div class="card-body">
+            <% if (copies.length === 0) { %>
+              <p class="muted">Bu kitap için henüz fiziksel kopya eklenmemiş. Aşağıdaki formdan ekleyebilirsiniz.</p>
+            <% } else { %>
+              <div class="copy-list">
+                <% for (const copy of copies) { %>
+                  <% const status = copyStatus(copy.status); %>
+                  <% const conditionValue = condition(copy.condition); %>
+                  <div class="copy-row">
+                    <div class="copy-row-main">
+                      <span class="copy-inventory"><%= copy.inventory_no %></span>
+                      <span class="text-small muted">
+                        <%= conditionValue.label %> · <%= copy.shelf_location || 'Raf belirtilmemiş' %>
+                        <% if (copy.acquired_at) { %> · Alındı: <%= formatDate(copy.acquired_at) %><% } %>
+                      </span>
+                    </div>
+                    <div class="btn-row">
+                      <span class="badge badge--<%= status.tone %>"><%= status.label %></span>
+                      <form class="inline-form" method="post" action="/admin/kopya/<%= copy.id %>/durum">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <label class="skip-link" for="copy-status-<%= copy.id %>">Kopya durumu</label>
+                        <select id="copy-status-<%= copy.id %>" name="status">
+                          <% for (const option of COPY_STATUS_OPTIONS) { %>
+                            <option value="<%= option.value %>" <%= copy.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+                          <% } %>
+                        </select>
+                        <button class="btn btn--secondary btn--sm" type="submit">Uygula</button>
+                      </form>
+                      <form method="post" action="/admin/kopya/<%= copy.id %>/sil" data-confirm="<%= copy.inventory_no %> numaralı kopyayı silmek istediğinize emin misiniz?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn--ghost btn--sm" type="submit">Sil</button>
+                      </form>
+                    </div>
+                  </div>
+                  <% if (copy.notes) { %>
+                    <p class="hint"><%= copy.notes %></p>
+                  <% } %>
+                <% } %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Kopya ekle</h2>
+          </div>
+          <div class="card-body">
+            <form method="post" action="/admin/kitaplar/<%= book.id %>/kopya">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="inventory_no">Envanter no</label>
+                  <input id="inventory_no" type="text" name="inventory_no" maxlength="40" placeholder="Boş bırakılırsa otomatik verilir">
+                  <p class="hint">Örn. CM-0001. Boş bırakırsanız sıradaki numara atanır.</p>
+                </div>
+                <div class="field">
+                  <label for="shelf_location">Raf / bölüm</label>
+                  <input id="shelf_location" type="text" name="shelf_location" maxlength="120" placeholder="Örn. Salon A / Roman">
+                </div>
+                <div class="field">
+                  <label for="condition">Durum</label>
+                  <select id="condition" name="condition">
+                    <% for (const option of CONDITION_OPTIONS) { %>
+                      <option value="<%= option.value %>"><%= option.label %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="acquired_at">Edinme tarihi</label>
+                  <input id="acquired_at" type="date" name="acquired_at">
+                </div>
+                <div class="field field--full">
+                  <label for="notes">Not</label>
+                  <input id="notes" type="text" name="notes" maxlength="500" placeholder="Bağışçı, hasar notu vb.">
+                </div>
+              </div>
+              <button class="btn" type="submit">Kopya ekle</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Ödünç geçmişi</h2>
+            <span class="text-small muted">Son <%= loans.length %> kayıt</span>
+          </div>
+          <% if (loans.length === 0) { %>
+            <div class="panel-body"><p class="muted mb-0">Bu kitap henüz ödünç verilmemiş.</p></div>
+          <% } else { %>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Üye</th><th>Kopya</th><th>Alış</th><th>Teslim</th><th>İade</th></tr>
+                </thead>
+                <tbody>
+                  <% for (const loan of loans) { %>
+                    <tr>
+                      <td>
+                        <%= loan.member_name %>
+                        <p class="table-sub"><%= loan.member_email %></p>
+                      </td>
+                      <td><span class="code"><%= loan.inventory_no %></span></td>
+                      <td class="nowrap"><%= formatDate(loan.loaned_at) %></td>
+                      <td class="nowrap"><%= formatDate(loan.due_at) %></td>
+                      <td class="nowrap">
+                        <% if (loan.returned_at) { %>
+                          <%= formatDate(loan.returned_at) %>
+                        <% } else { %>
+                          <span class="badge badge--<%= dueInfo(loan.due_at).tone === 'late' ? 'danger' : 'warn' %>"><%= dueInfo(loan.due_at).label %></span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card">
+          <div class="panel-head">
+            <h2>Özet</h2>
+          </div>
+          <div class="card-body">
+            <div class="btn-row">
+              <span class="badge badge--success"><%= book.available_copies %> müsait</span>
+              <span class="badge badge--warn"><%= book.total_copies - book.available_copies %> rafta yok</span>
+            </div>
+            <p class="text-small muted mt-2">
+              “Rafta yok” kopyalar ödünçte, rezerve, onarımda, kayıp veya arşiv dışı olabilir.
+              Ayrıntı için kopya listesine bakın.
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Talepler</h2>
+            <a href="/admin/talepler">Tüm talepler</a>
+          </div>
+          <% if (requests.length === 0) { %>
+            <div class="panel-body"><p class="muted mb-0">Bu kitap için talep yok.</p></div>
+          <% } else { %>
+            <div class="loan-list">
+              <% for (const request of requests) { %>
+                <% const status = requestStatus(request.status); %>
+                <div class="loan-row">
+                  <div>
+                    <h3><%= request.member_name %></h3>
+                    <p><%= formatDateTime(request.created_at) %><% if (request.copy_inventory_no) { %> · <span class="code"><%= request.copy_inventory_no %></span><% } %></p>
+                  </div>
+                  <span class="badge badge--<%= status.tone %>"><%= status.label %></span>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../../partials/footer') %>

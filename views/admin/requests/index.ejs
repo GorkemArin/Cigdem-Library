@@ -1,0 +1,132 @@
+<%- include('../../partials/head', { title: 'Ödünç talepleri' }) %>
+<%- include('../../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>Ödünç talepleri</h1>
+        <p>
+          Talepleri onaylayın, uygun kopyayı rezerve edin ve kitap elden teslim edildiğinde teslim işlemini yapın.
+          Toplam <%= total %> kayıt.
+        </p>
+      </div>
+      <a class="btn btn--secondary btn--sm" href="/admin/oduncler">Ödünç / iade ekranı</a>
+    </div>
+
+    <%- include('../../partials/admin-nav', { activeAdmin }) %>
+
+    <nav class="admin-nav" aria-label="Talep filtreleri">
+      <a class="admin-nav-link <%= filter === 'open' ? 'admin-nav-link--active' : '' %>" href="/admin/talepler?durum=open">Açık talepler</a>
+      <a class="admin-nav-link <%= filter === 'pending' ? 'admin-nav-link--active' : '' %>" href="/admin/talepler?durum=pending">Onay bekleyen</a>
+      <a class="admin-nav-link <%= filter === 'approved' ? 'admin-nav-link--active' : '' %>" href="/admin/talepler?durum=approved">Teslim bekleyen</a>
+      <a class="admin-nav-link <%= filter === 'closed' ? 'admin-nav-link--active' : '' %>" href="/admin/talepler?durum=closed">Kapananlar</a>
+      <a class="admin-nav-link <%= filter === 'all' ? 'admin-nav-link--active' : '' %>" href="/admin/talepler?durum=all">Tümü</a>
+    </nav>
+
+    <% if (requests.length === 0) { %>
+      <div class="empty-state">
+        <strong>Bu filtrede talep yok.</strong>
+        Üyeler katalogdan ödünç talebi oluşturduğunda burada görünür.
+      </div>
+    <% } else { %>
+      <div class="request-list">
+        <% for (const request of requests) { %>
+          <% const statusInfo = requestStatus(request.status); %>
+          <% const available = copiesByBook[request.book_id] || []; %>
+          <% const backTo = currentUrl; %>
+          <article class="request-card">
+            <div class="request-head">
+              <div>
+                <h3>
+                  <a href="/admin/kitaplar/<%= request.book_id %>"><%= request.book_title %></a>
+                </h3>
+                <p><%= request.book_authors || 'Yazar belirtilmemiş' %></p>
+                <p>
+                  Talep #<%= request.id %> ·
+                  <strong><%= request.member_name %></strong> (<%= request.member_email %>) ·
+                  <%= formatDateTime(request.created_at) %>
+                </p>
+              </div>
+              <span class="badge badge--<%= statusInfo.tone %>"><%= statusInfo.label %></span>
+            </div>
+
+            <% if (request.copy_inventory_no) { %>
+              <p class="text-small muted mt-1">
+                Rezerve kopya: <span class="code"><%= request.copy_inventory_no %></span>
+              </p>
+            <% } %>
+
+            <% if (request.member_note) { %>
+              <p class="request-note">Üye notu: <%= request.member_note %></p>
+            <% } %>
+            <% if (request.admin_note) { %>
+              <p class="request-note">Yönetici notu: <%= request.admin_note %></p>
+            <% } %>
+
+            <% if (request.status === 'pending') { %>
+              <% if (available.length === 0) { %>
+                <div class="notice notice--warn">
+                  Bu kitabın şu anda müsait kopyası yok. Kitap iade edildiğinde talebi onaylayabilirsiniz.
+                </div>
+              <% } else { %>
+                <form method="post" action="/admin/talepler/<%= request.id %>/onayla">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="return_to" value="<%= backTo %>">
+                  <div class="request-actions">
+                    <div class="field">
+                      <label for="copy-<%= request.id %>">Rezerve edilecek kopya</label>
+                      <select id="copy-<%= request.id %>" name="copy_id" required>
+                        <% for (const copy of available) { %>
+                          <option value="<%= copy.id %>"><%= copy.inventory_no %><%= copy.shelf_location ? ' · ' + copy.shelf_location : '' %></option>
+                        <% } %>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="admin-note-<%= request.id %>">Yönetici notu (isteğe bağlı)</label>
+                      <input id="admin-note-<%= request.id %>" type="text" name="admin_note" maxlength="500" placeholder="Teslim için not…">
+                    </div>
+                    <button class="btn" type="submit">Onayla ve rezerve et</button>
+                  </div>
+                </form>
+              <% } %>
+
+              <form class="mt-1" method="post" action="/admin/talepler/<%= request.id %>/reddet" data-confirm="Talebi reddetmek istediğinize emin misiniz?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="return_to" value="<%= backTo %>">
+                <button class="btn btn--secondary btn--sm" type="submit">Talebi reddet</button>
+              </form>
+            <% } else if (request.status === 'approved') { %>
+              <div class="notice notice--success">
+                Kopya rezerve edildi. Kitap üyeye elden teslim edildiğinde aşağıdaki düğmeyi kullanın.
+              </div>
+              <div class="request-actions">
+                <form method="post" action="/admin/talepler/<%= request.id %>/teslim" data-confirm="Kitabı üyeye teslim ettiğinizi onaylıyor musunuz?">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="return_to" value="<%= backTo %>">
+                  <button class="btn btn--saffron" type="submit">Teslim et ve ödünç aç</button>
+                </form>
+
+                <form method="post" action="/admin/talepler/<%= request.id %>/iptal" data-confirm="Bu talebi iptal etmek istediğinize emin misiniz? Rezerve kopya yeniden müsait olacak.">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="return_to" value="<%= backTo %>">
+                  <button class="btn btn--secondary" type="submit">Talebi iptal et</button>
+                </form>
+              </div>
+            <% } %>
+          </article>
+        <% } %>
+      </div>
+
+      <%- include('../../partials/pagination', {
+        pagination,
+        baseQuery: { durum: filter },
+      }) %>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../../partials/footer') %>

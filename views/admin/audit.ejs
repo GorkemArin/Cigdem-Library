@@ -1,0 +1,67 @@
+<%- include('../partials/head', { title: 'İşlem kayıtları' }) %>
+<%- include('../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>İşlem kayıtları</h1>
+        <p>Kütüphane işlemlerinin denetim kaydı. En son işlemler üstte gösterilir (en fazla 200 kayıt).</p>
+      </div>
+    </div>
+
+    <%- include('../partials/admin-nav', { activeAdmin }) %>
+
+    <% if (entries.length === 0) { %>
+      <div class="empty-state">
+        <strong>Henüz işlem kaydı yok.</strong>
+        Kitap ekleme, ödünç verme ve üyelik işlemleri yapıldıkça burada listelenir.
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>İşlem</th>
+              <th>Kullanıcı</th>
+              <th>Kayıt</th>
+              <th>Ayrıntı</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const entry of entries) { %>
+              <tr>
+                <td class="nowrap"><%= formatDateTime(entry.created_at) %></td>
+                <td>
+                  <span class="table-title"><%= entry.action_label %></span>
+                  <p class="table-sub"><span class="code"><%= entry.action %></span></p>
+                </td>
+                <td><%= entry.actor_name || 'Sistem' %></td>
+                <td class="nowrap">
+                  <% if (entry.entity_type) { %>
+                    <%= entry.entity_type %><%= entry.entity_id ? ' #' + entry.entity_id : '' %>
+                  <% } else { %>
+                    <span class="muted">—</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (entry.details) { %>
+                    <span class="code"><%= entry.details %></span>
+                  <% } else { %>
+                    <span class="muted">—</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

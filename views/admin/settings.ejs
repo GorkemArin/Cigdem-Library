@@ -1,0 +1,101 @@
+<%- include('../partials/head', { title: 'Ayarlar' }) %>
+<%- include('../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>Kütüphane ayarları</h1>
+        <p>Ödünç süreleri, üye limitleri ve iletişim bilgilerini buradan yönetin.</p>
+      </div>
+    </div>
+
+    <%- include('../partials/admin-nav', { activeAdmin }) %>
+
+    <form method="post" action="/admin/ayarlar">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <section class="form-section">
+        <h2>Genel</h2>
+        <p class="hint">Site başlığında ve alt bilgide görünen kütüphane adı.</p>
+
+        <div class="form-grid">
+          <div class="field field--full <%= errors.library_name ? 'field--invalid' : '' %>">
+            <label for="library_name">Kütüphane adı <span class="required">*</span></label>
+            <input id="library_name" type="text" name="library_name" value="<%= values.library_name %>" maxlength="120" required>
+            <% if (errors.library_name) { %><p class="field-error"><%= errors.library_name %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.contact_email ? 'field--invalid' : '' %>">
+            <label for="contact_email">İletişim e-postası</label>
+            <input id="contact_email" type="email" name="contact_email" value="<%= values.contact_email %>" maxlength="200">
+            <% if (errors.contact_email) { %><p class="field-error"><%= errors.contact_email %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.contact_phone ? 'field--invalid' : '' %>">
+            <label for="contact_phone">Telefon</label>
+            <input id="contact_phone" type="tel" name="contact_phone" value="<%= values.contact_phone %>" maxlength="40">
+            <% if (errors.contact_phone) { %><p class="field-error"><%= errors.contact_phone %></p><% } %>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Ödünç kuralları</h2>
+        <p class="hint">Yeni ödünçlerde kullanılacak süreler ve üye başına limitler.</p>
+
+        <div class="form-grid">
+          <div class="field <%= errors.loan_days ? 'field--invalid' : '' %>">
+            <label for="loan_days">Ödünç süresi (gün) <span class="required">*</span></label>
+            <input id="loan_days" type="number" name="loan_days" value="<%= values.loan_days %>" min="1" max="90" required>
+            <% if (errors.loan_days) { %><p class="field-error"><%= errors.loan_days %></p><% } %>
+            <p class="hint">Kitap teslim edildiğinde bu kadar gün sonrası teslim tarihi olarak belirlenir.</p>
+          </div>
+
+          <div class="field <%= errors.renew_days ? 'field--invalid' : '' %>">
+            <label for="renew_days">Uzatma süresi (gün) <span class="required">*</span></label>
+            <input id="renew_days" type="number" name="renew_days" value="<%= values.renew_days %>" min="1" max="60" required>
+            <% if (errors.renew_days) { %><p class="field-error"><%= errors.renew_days %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.max_renewals ? 'field--invalid' : '' %>">
+            <label for="max_renewals">En fazla uzatma sayısı <span class="required">*</span></label>
+            <input id="max_renewals" type="number" name="max_renewals" value="<%= values.max_renewals %>" min="0" max="5" required>
+            <% if (errors.max_renewals) { %><p class="field-error"><%= errors.max_renewals %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.max_active_loans ? 'field--invalid' : '' %>">
+            <label for="max_active_loans">Üye başına açık ödünç/talep <span class="required">*</span></label>
+            <input id="max_active_loans" type="number" name="max_active_loans" value="<%= values.max_active_loans %>" min="1" max="20" required>
+            <% if (errors.max_active_loans) { %><p class="field-error"><%= errors.max_active_loans %></p><% } %>
+            <p class="hint">Aktif ödünçler ve açık talepler birlikte sayılır.</p>
+          </div>
+
+          <div class="field <%= errors.hold_days ? 'field--invalid' : '' %>">
+            <label for="hold_days">Rezerve tutma süresi (gün) <span class="required">*</span></label>
+            <input id="hold_days" type="number" name="hold_days" value="<%= values.hold_days %>" min="1" max="30" required>
+            <% if (errors.hold_days) { %><p class="field-error"><%= errors.hold_days %></p><% } %>
+            <p class="hint">Onaylanan talebin kopyasının kaç gün rezerve tutulacağı (ileride otomatik iptal için kullanılacak).</p>
+          </div>
+
+          <div class="field <%= errors.fine_per_day ? 'field--invalid' : '' %>">
+            <label for="fine_per_day">Günlük gecikme bedeli (₺)</label>
+            <input id="fine_per_day" type="number" name="fine_per_day" value="<%= values.fine_per_day %>" min="0" max="1000" step="0.01">
+            <% if (errors.fine_per_day) { %><p class="field-error"><%= errors.fine_per_day %></p><% } %>
+            <p class="hint">0 girilirse gecikme bedeli hesaplanmaz. Şu an yalnızca bilgi amaçlıdır.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button class="btn" type="submit">Ayarları kaydet</button>
+        <a class="btn btn--secondary" href="/admin">Panele dön</a>
+      </div>
+    </form>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

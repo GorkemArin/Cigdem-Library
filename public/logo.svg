@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Çiğdemim Kütüphane">
+  <rect width="64" height="64" rx="16" fill="#4b2270"/>
+  <path d="M32 54V32" fill="none" stroke="#f0c96b" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 36c-10 0-17-6.5-17-15.5 6.8 0 12.6 3.3 15.2 8.6.2-8.1 1.8-15.1 1.8-15.1s1.6 7 1.8 15.1c2.6-5.3 8.4-8.6 15.2-8.6C49 19.5 42 36 32 36z" fill="#f0c96b"/>
+  <path d="M25 53h14" stroke="#f0c96b" stroke-width="3" stroke-linecap="round"/>
+</svg>

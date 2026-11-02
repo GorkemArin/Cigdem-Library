@@ -1,0 +1,32 @@
+<%
+  const coverVariant = book.id % 3;
+  const coverClass = coverVariant === 1 ? 'cover-placeholder--saffron' : coverVariant === 2 ? 'cover-placeholder--green' : '';
+  const initial = (book.title || '?').trim().charAt(0).toLocaleUpperCase('tr-TR');
+%>
+<article class="book-card">
+  <a class="book-cover" href="/kitaplar/<%= book.id %>" aria-label="<%= book.title %> detayı">
+    <span class="cover-placeholder <%= coverClass %>">
+      <span class="cover-initial"><%= initial %></span>
+      <span class="cover-caption">Çiğdemim Kütüphane</span>
+    </span>
+    <% if (book.cover_url) { %>
+      <img src="<%= book.cover_url %>" alt="" loading="lazy" referrerpolicy="no-referrer" data-cover>
+    <% } %>
+  </a>
+  <div class="book-card-body">
+    <h3 class="book-card-title"><a href="/kitaplar/<%= book.id %>"><%= book.title %></a></h3>
+    <p class="book-card-author"><%= book.authors || 'Yazar belirtilmemiş' %></p>
+    <div class="book-card-meta">
+      <% if (book.available_copies > 0) { %>
+        <span class="badge badge--success"><%= book.available_copies %> kopya müsait</span>
+      <% } else if (book.total_copies > 0) { %>
+        <span class="badge badge--warn">Şu an müsait değil</span>
+      <% } else { %>
+        <span class="badge badge--muted">Kopya yok</span>
+      <% } %>
+      <% if (book.published_year) { %>
+        <span class="text-small muted"><%= book.published_year %></span>
+      <% } %>
+    </div>
+  </div>
+</article>

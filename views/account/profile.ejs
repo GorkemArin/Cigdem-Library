@@ -1,0 +1,90 @@
+<%- include('../partials/head', { title: 'Profil bilgilerim' }) %>
+<%- include('../partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Hesabım</span>
+        <h1>Profil bilgilerim</h1>
+        <p>İletişim bilgilerinizi güncel tutun; kütüphane yöneticileri size bu bilgilerle ulaşabilir.</p>
+      </div>
+      <a class="btn btn--secondary btn--sm" href="/hesabim">← Hesabıma dön</a>
+    </div>
+
+    <div class="dashboard-columns">
+      <section class="card">
+        <div class="panel-head">
+          <h2>Üyelik bilgileri</h2>
+          <span class="badge badge--<%= userStatus(currentUser.status).tone %>"><%= userStatus(currentUser.status).label %></span>
+        </div>
+        <div class="card-body">
+          <p class="text-small muted">
+            Üye no: <strong><%= currentUser.member_no || 'Henüz atanmadı' %></strong><br>
+            E-posta: <strong><%= currentUser.email %></strong><br>
+            Kayıt tarihi: <strong><%= formatDate(currentUser.created_at) %></strong>
+          </p>
+
+          <form method="post" action="/hesabim/profil">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="field <%= errors.full_name ? 'field--invalid' : '' %>">
+              <label for="full_name">Ad ve soyad <span class="required">*</span></label>
+              <input id="full_name" type="text" name="full_name" value="<%= values.full_name %>" maxlength="120" required>
+              <% if (errors.full_name) { %><p class="field-error"><%= errors.full_name %></p><% } %>
+            </div>
+
+            <div class="field <%= errors.phone ? 'field--invalid' : '' %>">
+              <label for="phone">Telefon</label>
+              <input id="phone" type="tel" name="phone" value="<%= values.phone %>" maxlength="30" autocomplete="tel">
+              <% if (errors.phone) { %><p class="field-error"><%= errors.phone %></p><% } %>
+            </div>
+
+            <div class="field <%= errors.address ? 'field--invalid' : '' %>">
+              <label for="address">Adres / mahalle</label>
+              <input id="address" type="text" name="address" value="<%= values.address %>" maxlength="300" autocomplete="street-address">
+              <% if (errors.address) { %><p class="field-error"><%= errors.address %></p><% } %>
+            </div>
+
+            <button class="btn" type="submit">Bilgileri kaydet</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="panel-head">
+          <h2>Şifre değiştir</h2>
+        </div>
+        <div class="card-body">
+          <p class="text-small muted">Şifrenizi değiştirdiğinizde bu cihaz dışındaki oturumlar kapatılır.</p>
+
+          <form method="post" action="/hesabim/sifre">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="field">
+              <label for="current_password">Mevcut şifre <span class="required">*</span></label>
+              <input id="current_password" type="password" name="current_password" autocomplete="current-password" required>
+            </div>
+
+            <div class="field">
+              <label for="new_password">Yeni şifre <span class="required">*</span></label>
+              <input id="new_password" type="password" name="new_password" autocomplete="new-password" minlength="8" required>
+              <p class="hint">En az 8 karakter.</p>
+            </div>
+
+            <div class="field">
+              <label for="new_password_confirm">Yeni şifre (tekrar) <span class="required">*</span></label>
+              <input id="new_password_confirm" type="password" name="new_password_confirm" autocomplete="new-password" minlength="8" required>
+            </div>
+
+            <button class="btn btn--secondary" type="submit">Şifreyi güncelle</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

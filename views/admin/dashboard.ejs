@@ -1,0 +1,205 @@
+<%
+  const maxMonthly = Math.max(1, ...monthlyLoans.map((item) => item.total));
+%>
+<%- include('../partials/head', { title: 'Yönetim paneli' }) %>
+<%- include('../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>Kütüphane paneli</h1>
+        <p>Günlük işler, bekleyen talepler ve geciken iadeler tek ekranda.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn" href="/admin/kitaplar/yeni">Yeni kitap ekle</a>
+        <a class="btn btn--secondary" href="/admin/oduncler">Ödünç ver</a>
+      </div>
+    </div>
+
+    <%- include('../partials/admin-nav', { activeAdmin }) %>
+
+    <section class="dashboard-grid" aria-label="Kütüphane özeti">
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.books %></span>
+        <span class="stat-label">Kitap künyesi</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.copies %></span>
+        <span class="stat-label">Fiziksel kopya</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.available_copies %></span>
+        <span class="stat-label">Rafta müsait</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.active_members %></span>
+        <span class="stat-label">Aktif üye</span>
+      </div>
+      <div class="stat-card <%= stats.pending_members > 0 ? 'stat-card--warn' : '' %>">
+        <span class="stat-value"><%= stats.pending_members %></span>
+        <span class="stat-label">Onay bekleyen üye</span>
+      </div>
+      <div class="stat-card <%= stats.pending_requests > 0 ? 'stat-card--warn' : '' %>">
+        <span class="stat-value"><%= stats.pending_requests %></span>
+        <span class="stat-label">Bekleyen talep</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.active_loans %></span>
+        <span class="stat-label">Ödünçte</span>
+      </div>
+      <div class="stat-card <%= stats.overdue_loans > 0 ? 'stat-card--danger' : 'stat-card--success' %>">
+        <span class="stat-value"><%= stats.overdue_loans %></span>
+        <span class="stat-label">Gecikmiş iade</span>
+      </div>
+    </section>
+
+    <div class="admin-grid">
+      <div class="stack">
+        <section class="card">
+          <div class="panel-head">
+            <h2>Bekleyen talepler</h2>
+            <a href="/admin/talepler">Tümünü gör</a>
+          </div>
+          <% if (recentRequests.length === 0) { %>
+            <div class="panel-body"><p class="muted mb-0">Henüz ödünç talebi yok.</p></div>
+          <% } else { %>
+            <div class="loan-list">
+              <% for (const request of recentRequests) { %>
+                <% const status = requestStatus(request.status); %>
+                <div class="loan-row">
+                  <div>
+                    <h3><a href="/kitaplar/<%= request.book_id %>"><%= request.book_title %></a></h3>
+                    <p><%= request.member_name %> · <%= formatDateTime(request.created_at) %></p>
+                    <% if (request.member_note) { %><p>Not: <%= request.member_note %></p><% } %>
+                  </div>
+                  <div class="loan-row-meta">
+                    <span class="badge badge--<%= status.tone %>"><%= status.label %></span>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Geciken iadeler</h2>
+            <a href="/admin/oduncler?durum=overdue">Tümünü gör</a>
+          </div>
+          <% if (overdueLoans.length === 0) { %>
+            <div class="panel-body">
+              <p class="muted mb-0">Gecikmiş ödünç yok. Güzel haber!</p>
+            </div>
+          <% } else { %>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Üye</th><th>Kitap</th><th>Teslim</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <% for (const loan of overdueLoans) { %>
+                    <tr>
+                      <td><%= loan.member_name %></td>
+                      <td><%= loan.book_title %></td>
+                      <td><span class="badge badge--danger"><%= dueInfo(loan.due_at).label %></span></td>
+                      <td><a class="btn btn--ghost btn--sm" href="/admin/oduncler?durum=overdue">İşle</a></td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Aylık ödünç hareketi</h2>
+            <span class="text-small muted">Son 6 ay</span>
+          </div>
+          <div class="card-body">
+            <% if (monthlyLoans.length === 0) { %>
+              <p class="muted mb-0">Henüz ödünç kaydı yok.</p>
+            <% } else { %>
+              <div class="chart" role="img" aria-label="Son aylardaki ödünç sayıları">
+                <% for (const item of monthlyLoans) { %>
+                  <div class="chart-bar">
+                    <span class="chart-bar-value"><%= item.total %></span>
+                    <div class="chart-bar-fill bar-h-<%= Math.max(1, Math.round((item.total / maxMonthly) * 10)) %>"></div>
+                    <span class="chart-bar-label"><%= item.label %></span>
+                  </div>
+                <% } %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card">
+          <div class="panel-head">
+            <h2>Hızlı işlemler</h2>
+          </div>
+          <div class="panel-body">
+            <div class="btn-row">
+              <a class="btn btn--secondary btn--block" href="/admin/kitaplar/yeni">Kitap ekle</a>
+              <a class="btn btn--secondary btn--block" href="/admin/talepler">Talepleri işle</a>
+              <a class="btn btn--secondary btn--block" href="/admin/uyeler?durum=pending">Üyelik onayları</a>
+              <a class="btn btn--secondary btn--block" href="/admin/oduncler">Ödünç / iade</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>En çok ödünç alınanlar</h2>
+          </div>
+          <% if (popular.length === 0) { %>
+            <div class="panel-body"><p class="muted mb-0">Henüz veri yok.</p></div>
+          <% } else { %>
+            <div class="loan-list">
+              <% for (const item of popular) { %>
+                <div class="loan-row">
+                  <div>
+                    <h3><a href="/kitaplar/<%= item.id %>"><%= item.title %></a></h3>
+                    <p><%= item.authors || 'Yazar belirtilmemiş' %></p>
+                  </div>
+                  <span class="badge badge--accent"><%= item.loan_count %></span>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </section>
+
+        <section class="card">
+          <div class="panel-head">
+            <h2>Son işlemler</h2>
+            <a href="/admin/kayitlar">Tümü</a>
+          </div>
+          <div class="panel-body">
+            <% if (recentAudit.length === 0) { %>
+              <p class="muted mb-0">Henüz işlem kaydı yok.</p>
+            <% } else { %>
+              <div class="audit-list">
+                <% for (const entry of recentAudit) { %>
+                  <div class="audit-item">
+                    <span class="audit-dot" aria-hidden="true"></span>
+                    <div class="audit-main">
+                      <p><strong><%= entry.actor_name || 'Sistem' %></strong> · <%= entry.action_label || entry.action %></p>
+                      <span class="audit-time"><%= formatDateTime(entry.created_at) %></span>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

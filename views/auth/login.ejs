@@ -1,0 +1,49 @@
+<%- include('../partials/head', { title: 'Giriş yap' }) %>
+<%- include('../partials/header') %>
+
+<main id="main" class="page">
+  <div class="container">
+    <%- include('../partials/flash') %>
+
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-head">
+          <img class="brand-mark" src="/logo.svg" alt="" width="44" height="44">
+          <h1>Tekrar hoş geldiniz</h1>
+          <p>Ödünçlerinizi ve taleplerinizi görmek için giriş yapın.</p>
+        </div>
+
+        <% if (errors._form) { %>
+          <div class="form-error" role="alert"><%= errors._form %></div>
+        <% } %>
+
+        <form method="post" action="/giris<%= next ? '?next=' + encodeURIComponent(next) : '' %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (next) { %>
+            <input type="hidden" name="next" value="<%= next %>">
+          <% } %>
+
+          <div class="field <%= errors.email ? 'field--invalid' : '' %>">
+            <label for="email">E-posta</label>
+            <input id="email" type="email" name="email" value="<%= values.email %>" autocomplete="email" required autofocus>
+            <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %>
+          </div>
+
+          <div class="field <%= errors.password ? 'field--invalid' : '' %>">
+            <label for="password">Şifre</label>
+            <input id="password" type="password" name="password" autocomplete="current-password" required>
+            <% if (errors.password) { %><p class="field-error"><%= errors.password %></p><% } %>
+          </div>
+
+          <button class="btn btn--block mt-2" type="submit">Giriş yap</button>
+        </form>
+
+        <p class="auth-foot">
+          Hesabınız yok mu? <a href="/kayit">Üye olun</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

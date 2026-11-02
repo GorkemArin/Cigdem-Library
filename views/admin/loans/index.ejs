@@ -1,0 +1,167 @@
+<%- include('../../partials/head', { title: 'Ödünçler' }) %>
+<%- include('../../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>Ödünç ve iade</h1>
+        <p>
+          Aktif ödünçleri izleyin, iade alın, süre uzatın veya üyeye doğrudan ödünç verin.
+          Toplam <%= total %> kayıt.
+        </p>
+      </div>
+      <a class="btn btn--secondary btn--sm" href="/admin/talepler">Ödünç talepleri</a>
+    </div>
+
+    <%- include('../../partials/admin-nav', { activeAdmin }) %>
+
+    <nav class="admin-nav" aria-label="Ödünç filtreleri">
+      <a class="admin-nav-link <%= filter === 'active' ? 'admin-nav-link--active' : '' %>" href="/admin/oduncler?durum=active">Aktif</a>
+      <a class="admin-nav-link <%= filter === 'overdue' ? 'admin-nav-link--active' : '' %>" href="/admin/oduncler?durum=overdue">Gecikmiş</a>
+      <a class="admin-nav-link <%= filter === 'returned' ? 'admin-nav-link--active' : '' %>" href="/admin/oduncler?durum=returned">İade edilenler</a>
+      <a class="admin-nav-link <%= filter === 'all' ? 'admin-nav-link--active' : '' %>" href="/admin/oduncler?durum=all">Tümü</a>
+    </nav>
+
+    <section class="card">
+      <div class="panel-head">
+        <h2>Doğrudan ödünç ver</h2>
+        <span class="text-small muted">Varsayılan teslim: <%= formatDate(defaultDueDate) %></span>
+      </div>
+      <div class="card-body">
+        <% if (members.length === 0 || availableCopies.length === 0) { %>
+          <p class="muted mb-0">
+            Doğrudan ödünç vermek için hem aktif üye hem de müsait kopya gerekiyor.
+            <% if (members.length === 0) { %>Önce üyelikleri onaylayın.<% } %>
+            <% if (availableCopies.length === 0) { %>Şu anda müsait kopya yok.<% } %>
+          </p>
+        <% } else { %>
+          <form method="post" action="/admin/oduncler/yeni">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="return_to" value="<%= currentUrl %>">
+            <div class="form-grid">
+              <div class="field">
+                <label for="user_id">Üye <span class="required">*</span></label>
+                <select id="user_id" name="user_id" required>
+                  <% for (const member of members) { %>
+                    <option value="<%= member.id %>"><%= member.full_name %> · <%= member.member_no || member.email %></option>
+                  <% } %>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="copy_id">Kopya <span class="required">*</span></label>
+                <select id="copy_id" name="copy_id" required>
+                  <% for (const copy of availableCopies) { %>
+                    <option value="<%= copy.id %>">
+                      <%= copy.inventory_no %> · <%= copy.book_title %><%= copy.book_authors ? ' — ' + copy.book_authors : '' %>
+                    </option>
+                  <% } %>
+                </select>
+              </div>
+
+              <div class="field field--full">
+                <label for="notes">Not (isteğe bağlı)</label>
+                <input id="notes" type="text" name="notes" maxlength="500" placeholder="Teslim notu…">
+              </div>
+            </div>
+            <button class="btn" type="submit">Ödünç kaydı oluştur</button>
+          </form>
+        <% } %>
+      </div>
+    </section>
+
+    <form class="filter-form card card-body mt-2" method="get" action="/admin/oduncler">
+      <input type="hidden" name="durum" value="<%= filter %>">
+      <div class="field">
+        <label for="q">Üye, kitap veya envanter no</label>
+        <input id="q" type="search" name="q" value="<%= q %>" placeholder="Aramak için yazın…">
+      </div>
+      <button class="btn" type="submit">Ara</button>
+      <% if (q) { %>
+        <a class="btn btn--ghost" href="/admin/oduncler?durum=<%= filter %>">Temizle</a>
+      <% } %>
+    </form>
+
+    <% if (loans.length === 0) { %>
+      <div class="empty-state mt-2">
+        <strong>Bu filtrede ödünç kaydı yok.</strong>
+        Aktif ödünçler ve iadeler burada listelenir.
+      </div>
+    <% } else { %>
+      <div class="table-wrap mt-2">
+        <table>
+          <thead>
+            <tr>
+              <th>Üye</th>
+              <th>Kitap / kopya</th>
+              <th>Alış</th>
+              <th>Teslim</th>
+              <th>Durum</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const loan of loans) { %>
+              <% const backTo = currentUrl; %>
+              <% const overdue = !loan.returned_at && isOverdue(loan.due_at); %>
+              <tr>
+                <td>
+                  <span class="table-title"><%= loan.member_name %></span>
+                  <p class="table-sub"><%= loan.member_email %></p>
+                </td>
+                <td>
+                  <a class="table-title" href="/admin/kitaplar/<%= loan.book_id %>"><%= loan.book_title %></a>
+                  <p class="table-sub"><%= loan.book_authors || 'Yazar belirtilmemiş' %></p>
+                  <p class="table-sub">Kopya: <span class="code"><%= loan.inventory_no %></span></p>
+                </td>
+                <td class="nowrap"><%= formatDate(loan.loaned_at) %></td>
+                <td class="nowrap"><%= formatDate(loan.due_at) %></td>
+                <td>
+                  <% if (loan.returned_at) { %>
+                    <span class="badge badge--success">İade edildi</span>
+                    <p class="table-sub"><%= formatDate(loan.returned_at) %></p>
+                  <% } else if (overdue) { %>
+                    <span class="badge badge--danger"><%= dueInfo(loan.due_at).label %></span>
+                  <% } else { %>
+                    <span class="badge badge--warn"><%= dueInfo(loan.due_at).label %></span>
+                  <% } %>
+                  <% if (loan.renew_count > 0) { %>
+                    <p class="table-sub"><%= loan.renew_count %> kez uzatıldı</p>
+                  <% } %>
+                </td>
+                <td class="actions">
+                  <% if (!loan.returned_at) { %>
+                    <form class="inline-form" method="post" action="/admin/oduncler/<%= loan.id %>/iade" data-confirm="Kitabı iade aldığınızı onaylıyor musunuz?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="return_to" value="<%= backTo %>">
+                      <button class="btn btn--secondary btn--sm" type="submit">İade al</button>
+                    </form>
+
+                    <form class="inline-form" method="post" action="/admin/oduncler/<%= loan.id %>/uzat" data-confirm="Ödünç süresini uzatmak istediğinize emin misiniz?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="return_to" value="<%= backTo %>">
+                      <button class="btn btn--ghost btn--sm" type="submit">Süre uzat</button>
+                    </form>
+                  <% } else { %>
+                    <span class="text-small muted">İşlem yok</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <%- include('../../partials/pagination', {
+        pagination,
+        baseQuery: { durum: filter, q: q || undefined },
+      }) %>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../../partials/footer') %>

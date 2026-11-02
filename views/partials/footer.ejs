@@ -1,0 +1,31 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img class="brand-mark" src="/logo.svg" alt="" width="44" height="44">
+        <div>
+          <strong><%= settings.library_name %></strong>
+          <p>Çiğdem Mahallesi sakinlerinin ortak kitap rafı. Oku, paylaş, geri getir.</p>
+        </div>
+      </div>
+
+      <div class="footer-links">
+        <a href="/kitaplar">Katalog</a>
+        <a href="/hakkinda">Nasıl çalışır?</a>
+        <% if (currentUser) { %>
+          <a href="<%= currentUser.role === 'admin' ? '/admin' : '/hesabim' %>">Hesabım</a>
+        <% } else { %>
+          <a href="/kayit">Üye ol</a>
+          <a href="/giris">Giriş</a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="footer-meta">
+      <span>© <%= currentYear %> <%= settings.library_name %></span>
+      <span>Künye zenginleştirme: Open Library · Yerel arşiv verileri derneğe aittir.</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

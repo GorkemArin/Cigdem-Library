@@ -1,0 +1,24 @@
+<nav class="admin-nav" aria-label="Yönetim menüsü">
+  <a class="admin-nav-link <%= activeAdmin === 'panel' ? 'admin-nav-link--active' : '' %>" href="/admin">Panel</a>
+  <a class="admin-nav-link <%= activeAdmin === 'kitaplar' ? 'admin-nav-link--active' : '' %>" href="/admin/kitaplar">Kitaplar</a>
+  <a class="admin-nav-link <%= activeAdmin === 'uyeler' ? 'admin-nav-link--active' : '' %>" href="/admin/uyeler">
+    Üyeler
+    <% if (adminCounts && adminCounts.pendingMembers > 0) { %>
+      <span class="admin-nav-count"><%= adminCounts.pendingMembers %></span>
+    <% } %>
+  </a>
+  <a class="admin-nav-link <%= activeAdmin === 'talepler' ? 'admin-nav-link--active' : '' %>" href="/admin/talepler">
+    Talepler
+    <% if (adminCounts && adminCounts.pendingRequests > 0) { %>
+      <span class="admin-nav-count"><%= adminCounts.pendingRequests %></span>
+    <% } %>
+  </a>
+  <a class="admin-nav-link <%= activeAdmin === 'oduncler' ? 'admin-nav-link--active' : '' %>" href="/admin/oduncler">
+    Ödünçler
+    <% if (adminCounts && adminCounts.overdueLoans > 0) { %>
+      <span class="admin-nav-count"><%= adminCounts.overdueLoans %></span>
+    <% } %>
+  </a>
+  <a class="admin-nav-link <%= activeAdmin === 'ayarlar' ? 'admin-nav-link--active' : '' %>" href="/admin/ayarlar">Ayarlar</a>
+  <a class="admin-nav-link <%= activeAdmin === 'kayitlar' ? 'admin-nav-link--active' : '' %>" href="/admin/kayitlar">Kayıtlar</a>
+</nav>

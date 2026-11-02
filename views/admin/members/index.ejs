@@ -1,0 +1,143 @@
+<%- include('../../partials/head', { title: 'Üyeler' }) %>
+<%- include('../../partials/header') %>
+
+<main id="main" class="page page--tight">
+  <div class="container">
+    <%- include('../../partials/flash') %>
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Yönetim</span>
+        <h1>Üyeler</h1>
+        <p><%= total %> kayıt. Yeni başvuruları onaylayın, askıya alın veya yönetici rolü verin.</p>
+      </div>
+    </div>
+
+    <%- include('../../partials/admin-nav', { activeAdmin }) %>
+
+    <form class="filter-form card card-body" method="get" action="/admin/uyeler">
+      <div class="field">
+        <label for="q">Ad, e-posta veya üye no</label>
+        <input id="q" type="search" name="q" value="<%= q %>" placeholder="Aramak için yazın…">
+      </div>
+      <div class="field">
+        <label for="durum">Durum</label>
+        <select id="durum" name="durum">
+          <option value="all" <%= status === 'all' ? 'selected' : '' %>>Tümü</option>
+          <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>Onay bekleyen</option>
+          <option value="active" <%= status === 'active' ? 'selected' : '' %>>Aktif</option>
+          <option value="suspended" <%= status === 'suspended' ? 'selected' : '' %>>Askıda</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="rol">Rol</label>
+        <select id="rol" name="rol">
+          <option value="all" <%= role === 'all' ? 'selected' : '' %>>Tümü</option>
+          <option value="admin" <%= role === 'admin' ? 'selected' : '' %>>Yönetici</option>
+          <option value="member" <%= role === 'member' ? 'selected' : '' %>>Üye</option>
+        </select>
+      </div>
+      <button class="btn" type="submit">Filtrele</button>
+      <% if (q || status !== 'all' || role !== 'all') { %>
+        <a class="btn btn--ghost" href="/admin/uyeler">Temizle</a>
+      <% } %>
+    </form>
+
+    <% if (members.length === 0) { %>
+      <div class="empty-state mt-2">
+        <strong>Bu filtrelerle üye bulunamadı.</strong>
+        Farklı bir arama deneyin veya filtreleri temizleyin.
+      </div>
+    <% } else { %>
+      <div class="table-wrap mt-2">
+        <table>
+          <thead>
+            <tr>
+              <th>Üye</th>
+              <th>Durum</th>
+              <th>Rol</th>
+              <th>Ödünç / talep</th>
+              <th>Kayıt</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const member of members) { %>
+              <% const statusInfo = userStatus(member.status); %>
+              <% const roleBadge = roleInfo(member.role); %>
+              <% const backTo = currentUrl; %>
+              <tr>
+                <td>
+                  <span class="table-title"><%= member.full_name %></span>
+                  <p class="table-sub"><%= member.email %></p>
+                  <p class="table-sub">
+                    No: <span class="code"><%= member.member_no || '—' %></span>
+                    <% if (member.phone) { %> · <%= member.phone %><% } %>
+                  </p>
+                </td>
+                <td>
+                  <span class="badge badge--<%= statusInfo.tone %>"><%= statusInfo.label %></span>
+                </td>
+                <td>
+                  <span class="badge badge--<%= roleBadge.tone %>"><%= roleBadge.label %></span>
+                </td>
+                <td class="nowrap">
+                  <span class="text-small"><%= member.active_loans %> ödünç</span>
+                  <% if (member.overdue_loans > 0) { %>
+                    <span class="badge badge--danger"><%= member.overdue_loans %> gecikmiş</span>
+                  <% } %>
+                  <% if (member.open_requests > 0) { %>
+                    <span class="badge badge--warn"><%= member.open_requests %> talep</span>
+                  <% } %>
+                </td>
+                <td class="nowrap"><%= formatDate(member.created_at) %></td>
+                <td class="actions">
+                  <% if (member.status === 'pending') { %>
+                    <form class="inline-form" method="post" action="/admin/uyeler/<%= member.id %>/durum">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="return_to" value="<%= backTo %>">
+                      <input type="hidden" name="status" value="active">
+                      <button class="btn btn--saffron btn--sm" type="submit">Onayla</button>
+                    </form>
+                  <% } else if (member.status === 'active') { %>
+                    <form class="inline-form" method="post" action="/admin/uyeler/<%= member.id %>/durum" data-confirm="<%= member.full_name %> adlı üyeyi askıya almak istediğinize emin misiniz?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="return_to" value="<%= backTo %>">
+                      <input type="hidden" name="status" value="suspended">
+                      <button class="btn btn--secondary btn--sm" type="submit">Askıya al</button>
+                    </form>
+                  <% } else { %>
+                    <form class="inline-form" method="post" action="/admin/uyeler/<%= member.id %>/durum">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="return_to" value="<%= backTo %>">
+                      <input type="hidden" name="status" value="active">
+                      <button class="btn btn--secondary btn--sm" type="submit">Yeniden etkinleştir</button>
+                    </form>
+                  <% } %>
+
+                  <form class="inline-form" method="post" action="/admin/uyeler/<%= member.id %>/rol" data-confirm="<%= member.full_name %> adlı kullanıcının rolünü değiştirmek istediğinize emin misiniz?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="return_to" value="<%= backTo %>">
+                    <label class="skip-link" for="role-<%= member.id %>">Rol</label>
+                    <select id="role-<%= member.id %>" name="role">
+                      <option value="member" <%= member.role === 'member' ? 'selected' : '' %>>Üye</option>
+                      <option value="admin" <%= member.role === 'admin' ? 'selected' : '' %>>Yönetici</option>
+                    </select>
+                    <button class="btn btn--ghost btn--sm" type="submit">Uygula</button>
+                  </form>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <%- include('../../partials/pagination', {
+        pagination,
+        baseQuery: { q: q || undefined, durum: status, rol: role },
+      }) %>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../../partials/footer') %>
